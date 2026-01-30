@@ -3,8 +3,6 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 
 app = Flask(__name__)
-
-# This ensures the database is created in your project folder
 db_path = os.path.join(os.path.dirname(__file__), 'astra_v3.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -15,7 +13,7 @@ class Question(db.Model):
     text = db.Column(db.String(200))
     options = db.Column(db.String(200)) 
     correct_idx = db.Column(db.Integer)
-    hint = db.Column(db.String(200)) # The JS needs this!
+    hint = db.Column(db.String(200)) 
 
 class Leaderboard(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -28,7 +26,7 @@ def index():
 @app.route('/api/questions')
 def get_questions():
     qs = Question.query.all()
-    # CRITICAL UPDATE: Added 'hint' to the returned JSON
+    
     return jsonify([{
         'q': q.text, 
         'options': q.options.split(','),
@@ -46,14 +44,13 @@ def handle_leaderboard():
             db.session.commit()
         return jsonify({'status': 'saved'})
     
-    # Returns top 5 scores
     top_scores = Leaderboard.query.order_by(Leaderboard.score.desc()).limit(5).all()
     return jsonify([{'score': s.score} for s in top_scores])
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        # Seed the database if empty
+
         if Question.query.count() == 0:
             sample_qs = [
                 Question(text="20 x 5?", options="80,100,120", correct_idx=1, hint="Think of a century (100)."),
