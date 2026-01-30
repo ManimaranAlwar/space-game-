@@ -6,7 +6,7 @@ class AstraEngine {
         this.planetPool = ['jupeter.png', 'mars.png', 'sarten.png', 'urenis.png',"ploto.png","suturn.png","earth.png"];
         this.createStars();
         
-        // Manual Hint Button
+
         document.getElementById('hint-btn').onclick = () => this.triggerHint();
     }
 
@@ -25,7 +25,7 @@ class AstraEngine {
     async init() {
         const res = await fetch('/api/questions');
         this.questions = await res.json();
-        // Spawn big home planet
+
         this.spawnPlanet("START", "earth.png", 50, 5, 180, true);
         this.startLoop();
         this.loadMission();
@@ -55,7 +55,7 @@ class AstraEngine {
         if(!q) return this.endGame("GALAXY SAVED!");
         document.getElementById('question-text').innerText = q.q;
 
-        // Positioned low to avoid terminal (15% drop applied)
+ 
         const pos = [{ l: 20, b: 35 }, { l: 50, b: 50 }, { l: 80, b: 35 }];
 
         q.options.forEach((opt, i) => {
