@@ -1,25 +1,56 @@
 from flask import Flask, render_template, jsonify, request
-from flask_sqlalchemy import SQLAlchemy
-import os
 
 app = Flask(__name__)
 
-# This ensures the database is created in your project folder
-db_path = os.path.join(os.path.dirname(__file__), 'astra_v3.db')
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+# Direct Data Access: Questions stored in a list of dictionaries
+# Perfect for kids under 13!
+QUIZ_DATA = [
+    {
+        "q": "What is 5 + 5?",
+        "options": ["10", "15", "20"],
+        "correct": 0,
+        "hint": "Count all your fingers!"
+    },
+    {
+        "q": "Which shape has 3 sides?",
+        "options": ["Square", "Triangle", "Circle"],
+        "correct": 1,
+        "hint": "Think of a slice of pizza."
+    },
+    {
+        "q": "What color is a banana?",
+        "options": ["Red", "Yellow", "Blue"],
+        "correct": 1,
+        "hint": "It is the same color as the sun."
+    },
+    {
+        "q": "Which animal says 'Moo'?",
+        "options": ["Dog", "Sheep", "Cow"],
+        "correct": 2,
+        "hint": "This animal gives us milk."
+    },
+    {
+        "q": "How many legs does a spider have?",
+        "options": ["4", "6", "8"],
+        "correct": 2,
+        "hint": "It is more than a dog has."
+    },
+    {
+        "q": "What is 10 minus 2?",
+        "options": ["7", "8", "9"],
+        "correct": 1,
+        "hint": "Count backwards twice from ten."
+    },
+    {
+        "q": "What comes after the number 9?",
+        "options": ["8", "10", "11"],
+        "correct": 1,
+        "hint": "It is the first two-digit number."
+    }
+]
 
-class Question(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(200))
-    options = db.Column(db.String(200)) 
-    correct_idx = db.Column(db.Integer)
-    hint = db.Column(db.String(200)) # The JS needs this!
-
-class Leaderboard(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    score = db.Column(db.Integer)
+# Simple in-memory leaderboard (Resets when you restart the app)
+leaderboard_data = []
 
 @app.route('/')
 def index():
@@ -27,39 +58,20 @@ def index():
 
 @app.route('/api/questions')
 def get_questions():
-    qs = Question.query.all()
-    # CRITICAL UPDATE: Added 'hint' to the returned JSON
-    return jsonify([{
-        'q': q.text, 
-        'options': q.options.split(','),
-        'correct': q.correct_idx, 
-        'hint': q.hint 
-    } for q in qs])
+    # Returns the list directly from memory
+    return jsonify(QUIZ_DATA)
 
 @app.route('/api/leaderboard', methods=['GET', 'POST'])
 def handle_leaderboard():
     if request.method == 'POST':
         data = request.json
         if data and 'score' in data:
-            new_score = Leaderboard(score=data['score'])
-            db.session.add(new_score)
-            db.session.commit()
+            leaderboard_data.append({'score': data['score']})
+            # Sort and keep only top 5
+            leaderboard_data.sort(key=lambda x: x['score'], reverse=True)
         return jsonify({'status': 'saved'})
     
-    # Returns top 5 scores
-    top_scores = Leaderboard.query.order_by(Leaderboard.score.desc()).limit(5).all()
-    return jsonify([{'score': s.score} for s in top_scores])
+    return jsonify(leaderboard_data[:5])
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        # Seed the database if empty
-        if Question.query.count() == 0:
-            sample_qs = [
-                Question(text="20 x 5?", options="80,100,120", correct_idx=1, hint="Think of a century (100)."),
-                Question(text="Root of 81?", options="7,8,9", correct_idx=2, hint="What is 9 times 9?"),
-                Question(text="15 + 15 + 15?", options="30,45,60", correct_idx=1, hint="It is 3 times 15.")
-            ]
-            db.session.bulk_save_objects(sample_qs)
-            db.session.commit()
     app.run(debug=True)

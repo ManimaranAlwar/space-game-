@@ -1,12 +1,16 @@
 class AstraEngine {
     constructor() {
-        this.score = 0; this.oxygen = 100; this.fuel = 100;
-        this.currentIdx = 0; this.questions = [];
+        this.score = 0; 
+        this.oxygen = 100; 
+        this.fuel = 100;
+        this.currentIdx = 0; 
+        this.questions = [];
         this.astro = document.getElementById('astronaut');
-        this.planetPool = ['jupeter.png', 'mars.png', 'sarten.png', 'urenis.png',"ploto.png","suturn.png","earth.png"];
+        this.planetPool = [
+            'jupeter.png', 'mars.png', 'sarten.png', 
+            'urenis.png', 'ploto.png', 'suturn.png', 'earth.png'
+        ];
         this.createStars();
-        
-        // Manual Hint Button
         document.getElementById('hint-btn').onclick = () => this.triggerHint();
     }
 
@@ -25,7 +29,6 @@ class AstraEngine {
     async init() {
         const res = await fetch('/api/questions');
         this.questions = await res.json();
-        // Spawn big home planet
         this.spawnPlanet("START", "earth.png", 50, 5, 180, true);
         this.startLoop();
         this.loadMission();
@@ -55,11 +58,11 @@ class AstraEngine {
         if(!q) return this.endGame("GALAXY SAVED!");
         document.getElementById('question-text').innerText = q.q;
 
-        // Positioned low to avoid terminal (15% drop applied)
         const pos = [{ l: 20, b: 35 }, { l: 50, b: 50 }, { l: 80, b: 35 }];
+        let shuffled = [...this.planetPool].sort(() => Math.random() - 0.5);
 
         q.options.forEach((opt, i) => {
-            const img = this.planetPool[Math.floor(Math.random()*4)];
+            const img = shuffled[i]; 
             const p = this.spawnPlanet(opt, img, pos[i].l, pos[i].b, 150);
             p.onclick = () => this.jump(p, i === q.correct);
         });
@@ -72,7 +75,6 @@ class AstraEngine {
             return;
         }
 
-        // Activate Fire
         this.astro.classList.add('flying');
         this.fuel -= 10;
         this.score += 100;
@@ -82,12 +84,13 @@ class AstraEngine {
         this.syncAstro(target);
 
         setTimeout(() => {
-            // Deactivate Fire
             this.astro.classList.remove('flying');
             document.querySelectorAll('.planet').forEach(p => { if(p !== target) p.remove(); });
             
-            target.style.left = "50%"; target.style.bottom = "5%";
-            target.style.width = "180px"; target.style.height = "180px";
+            target.style.left = "50%"; 
+            target.style.bottom = "5%";
+            target.style.width = "180px"; 
+            target.style.height = "180px";
             
             setTimeout(() => {
                 this.syncAstro(target);
@@ -99,19 +102,25 @@ class AstraEngine {
 
     syncAstro(p) {
         const r = p.getBoundingClientRect();
+        // Offset slightly so the astronaut looks like they are standing ON the floating planet
         this.astro.style.left = `${r.left + r.width/2 - 32}px`;
-        this.astro.style.top = `${r.top + r.height/2 - 40}px`;
+        this.astro.style.top = `${r.top + r.height/2 - 80}px`;
     }
 
     spawnPlanet(txt, img, l, b, size, isOrigin=false) {
         const p = document.createElement('div');
         p.className = 'planet';
         p.innerHTML = `<span>${txt}</span>`;
-        p.style.left = l+'%'; p.style.bottom = b+'%';
-        p.style.width = size+'px'; p.style.height = size+'px';
+        p.style.left = l+'%'; 
+        p.style.bottom = b+'%';
+        p.style.width = size+'px'; 
+        p.style.height = size+'px';
         p.style.backgroundImage = `url('/static/images/${img}')`;
         document.body.appendChild(p);
-        if(isOrigin) setTimeout(() => this.syncAstro(p), 100);
+        
+        if(isOrigin) {
+            setTimeout(() => this.syncAstro(p), 100);
+        }
         return p;
     }
 

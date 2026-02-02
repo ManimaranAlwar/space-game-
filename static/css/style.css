@@ -2,12 +2,19 @@
 
 body, html { 
     margin: 0; padding: 0; height: 100%; overflow: hidden; 
-    background: url('/static/images/galaxi.png') no-repeat center center fixed; 
+    background: url('/static/images/bg.png') no-repeat center center fixed; 
     background-size: cover; font-family: 'Orbitron', sans-serif; color: white; 
 }
 
 #starfield { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
 .star { position: absolute; background: white; border-radius: 50%; opacity: 0.6; }
+
+/* FLOATING ANIMATION */
+@keyframes float {
+    0% { transform: translateX(-50%) translateY(0px); }
+    50% { transform: translateX(-50%) translateY(-15px); }
+    100% { transform: translateX(-50%) translateY(0px); }
+}
 
 /* HUD & BUTTONS */
 .hud { position: fixed; top: 15px; width: 100%; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
@@ -20,16 +27,45 @@ body, html {
 .terminal { position: fixed; top: 75px; left: 50%; transform: translateX(-50%); background: rgba(15,23,42,0.9); border: 2px solid #22d3ee; padding: 15px 30px; border-radius: 12px; text-align: center; z-index: 100; width: 70%; max-width: 600px; }
 
 /* ASTRONAUT & FIRE */
-.astronaut { position: absolute; width: 65px; height: 75px; background: url('/static/images/astr.png') center/contain no-repeat; z-index: 500; transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.astronaut { 
+    position: absolute; 
+    width: 65px; 
+    height: 75px; 
+    background: url('/static/images/astr.png') center/contain no-repeat; 
+    z-index: 500; 
+    /* Smooth transition for jumping, but immediate for floating sync */
+    transition: left 0.7s, top 0.7s, transform 0.1s; 
+    pointer-events: none;
+}
 .fire-tail { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); width: 25px; height: 0; background: linear-gradient(to bottom, #ff4500, #ffae00, transparent); filter: blur(3px); border-radius: 50%; transition: 0.3s; }
 .flying .fire-tail { height: 50px; animation: flicker 0.1s infinite; }
 
 @keyframes flicker { 0% { opacity: 0.7; } 100% { opacity: 1; } }
 
-/* PLANETS (BIGGER) */
-.planet { position: absolute; transform: translateX(-50%); border-radius: 50%; background-size: cover; background-position: center; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: all 0.8s; }
+/* PLANETS (FLOATING ENABLED) */
+.planet { 
+    position: absolute; 
+    transform: translateX(-50%); 
+    border-radius: 50%; 
+    background-size: cover; 
+    background-position: center; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    z-index: 10; 
+    /* Apply floating animation */
+    animation: float 4s ease-in-out infinite;
+}
+
+/* Give different planets slightly different speeds so it looks natural */
+.planet:nth-child(odd) { animation-duration: 3.5s; animation-delay: 0.2s; }
+.planet:nth-child(even) { animation-duration: 4.5s; animation-delay: 0.5s; }
+
 .planet span { font-weight: 900; font-size: 1.5rem; text-shadow: 2px 2px 4px #000; pointer-events: none; }
-.planet-fall { animation: fall 1.2s forwards; pointer-events: none; }
+
+/* Death Animation overrides floating */
+.planet-fall { animation: fall 1.2s forwards !important; pointer-events: none; }
 
 @keyframes fall { 100% { transform: translateX(-50%) translateY(1000px) rotate(360deg); opacity: 0; } }
 
